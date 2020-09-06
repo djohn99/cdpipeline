@@ -1,0 +1,43 @@
+- block:
+
+    - name: Copy {{ source_dir }}/{{ item[1] }} -> {{ dest_dir }}/{{ item[1] }}
+      copy:
+        src: '{{ source_dir }}/{{ item[1] }}'
+        dest: '{{ dest_dir }}/{{ item[1] }}'
+        remote_src: yes
+
+    - name: Start JBOSS server
+      shell: '{{ jboss_script }} start > ~/jboss_start_result.output'
+      async: 155520000 # 5 years‬
+      poll: 0
+
+    - name: Wait for JBoss to start
+      shell: 'while [[ "$(pgrep -f standalone.sh)" == "" ]]; do sleep 1; done'
+
+    - name: Check if deployment is complete
+      find:
+        paths: '{{ deployment_dir }}'
+        file_type: file
+        patterns: '^{{ item[1] }}(\.deployed|\.failed)$'
+        use_regex: yes
+      register: result
+      until: result.files | length > 0
+      retries: 60
+      delay: 10
+
+    - name: Check if deployment failed for {{ item[1] }}
+      fail:
+        msg: Deployment failed for {{ item[1] }}
+      when: result.files[0].path is regex('.failed$')
+      ignore_errors: yes
+
+    - name: Capture environment variables
+      shell: 'env'
+      register: env_result
+
+    - name: Display environment variables
+      debug: msg='{{ env_result.stdout.split('\n') }}'
+
+  tags:
+    - deploy
+    - rollback

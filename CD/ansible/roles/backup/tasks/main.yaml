@@ -1,0 +1,46 @@
+# - name: Create backup directory {{ backup_dir }}
+#   file:
+#     path: '{{ backup_dir }}'
+#     state: directory
+
+# - name: Get list of dirs in {{ backup_base_dir }}
+#   find:
+#     paths: '{{ backup_base_dir }}'
+#     file_type: directory
+#   register: backup_dirs
+
+# - name: Remove backup dirs, except the newest {{ backup_count }}
+#   file:
+#     path: '{{ item.path }}'
+#     state: absent
+#   loop: '{{ backup_dirs.files| sort(reverse = True) }}'
+#   loop_control:
+#     index_var: idx
+#     label: '{{ item.path }}'
+#   when: idx > backup_count
+
+- name: Set Rollback Dir
+  set_fact:
+    rollback_dir: '{{ item.path }}'
+  loop: '{{ backup_dirs.files| sort(reverse = False) }}'
+  loop_control:
+    index_var: idx
+    label: '{{ item.path }}'
+  when: idx == 0
+
+# - name: Get list of war files in {{ deployment_dir }}
+#   find:
+#     paths: '{{ deployment_dir }}'
+#     file_type: file
+#     patterns: '^.*\.war$'
+#     use_regex: yes
+#   register: war_files
+
+# - name: Copy files to backup dir {{ backup_dir}}
+#   copy:
+#     src: '{{ item.path }}'
+#     dest: '{{ backup_dir }}/{{ item.path | basename}}'
+#     remote_src: yes
+#   loop: '{{ war_files.files }}'
+#   loop_control:
+#     label: '{{ item.path }}'

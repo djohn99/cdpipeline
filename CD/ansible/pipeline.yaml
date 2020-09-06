@@ -1,0 +1,82 @@
+# The app_environment dictionary is loaded from environment/{{env_type}}.yaml
+- name: "Prerequisites"
+  hosts: DEV, SIT, STG
+  gather_facts: false
+
+  tasks:
+    - fail: msg='Tags must be provided (--tags)'
+
+    - name: Ensure ~/asuser exists
+      template:
+        src: 'asuser.j2'
+        dest: '~/asuser'
+        mode: 'u=rwx,g=rx,o=rx'
+      tags:
+        - deploy
+
+# ansible-playbook local.yaml --e nexus_username=<user> -e nexus_password=<password> -e application_version=<version -e env_type=dev --tags <deploy|rollback>
+- name: 'Deployment'
+  hosts: DEV, SIT, STG
+  become: true
+  become_method: su
+  become_user: root
+  gather_facts: true
+
+  # vars_files:
+  #   - environment/{{env_type}}.yaml
+
+  # environment: '{{ app_environment }}'
+
+  vars:
+    base_nexus_repo_url: 'http://nexus.com'
+    base_jboss_dir: '{jboss_baseurl}'
+    jboss_script: '{{ base_jboss_dir }}/bin/.sh'
+    deployment_dir: '{{ base_jboss_dir }}/deployments'
+    tmp_dir: '{{ base_jboss_dir }}/tmp'
+    backup_base_dir: '{{ base_jboss_dir }}/backup'
+    backup_dir: '{{ backup_base_dir }}/{{ ansible_date_time.iso8601_basic_short }}'
+    backup_count: 5
+    artifacts: [] # the values are set in the facts role
+
+  tasks:
+
+    - fail: msg='Tags must be provided (--tags)'
+
+    - import_role:
+        name: validate
+      tags:
+        - deploy
+        - rollback
+        - upload
+
+    - import_role:
+        name: set-facts
+      vars:
+        baseURL: '{{ base_nexus_repo_url }}'
+        env_type: '{{ env_type }}'
+      tags:
+        - deploy
+        - rollback
+        - upload
+
+    - import_role:
+        name: deploy
+      tags:
+        - deploy
+
+    - import_role:
+        name: backup
+      tags:
+        - deploy
+
+    - import_role:
+        name: upload
+      tags:
+        - upload
+
+    - import_role:
+        name: rollback
+      vars:
+        rollback: true
+      tags:
+        - rollback

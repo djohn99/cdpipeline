@@ -1,0 +1,14 @@
+- set_fact:
+    nexus_repo_download_url: '{{ base_nexus_repo_url }}'
+    nexus_repo_upload_url: '{{ base_nexus_repo_url }}/dev'
+  when: env_type == 'dev'
+
+- set_fact:
+    nexus_repo_download_url: '{{ base_nexus_repo_url }}/dev'
+    nexus_repo_upload_url: '{{ base_nexus_repo_url }}/sit'
+  when: env_type == 'sit'
+
+- set_fact:
+    artifacts:
+      - - '{artifacts_name_folder}/{{ application_version }}'
+        - '{artifacts_name}-{{ application_version }}.war'

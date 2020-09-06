@@ -1,0 +1,33 @@
+- name: Get list of dirs in {{ backup_base_dir }}
+  find:
+    paths: '{{ backup_base_dir }}'
+    file_type: directory
+  register: backup_dirs
+
+- name: Set Rollback Dir
+  set_fact:
+    rollback_dir: '{{ item.path }}'
+  loop: '{{ backup_dirs.files| sort(reverse = True) }}'
+  loop_control:
+    index_var: idx
+    label: '{{ item.path }}'
+  when: idx == 0
+
+- name: Stop JBOSS server - '{{ jboss_script }} stop'
+  shell: '{{ jboss_script }} stop'
+  register: jboss_stop_result
+
+- name: Display output from - '{{ jboss_script }} stop'
+  debug: msg='{{ jboss_stop_result.stdout.split('\n') }}'
+
+# - name: Restart JBoss
+#   include_tasks: library/restart-jboss.yaml
+
+- name: Copy files from rollback dir {{ rollback_dir }}
+  include_tasks: library/copy-war-files.yaml
+  vars:
+    source_dir: '{{ rollback_dir }}'
+    dest_dir: '{{ deployment_dir }}'
+  loop: "{{ artifacts }}"
+  loop_control:
+    label: '{{ item[1] }}'

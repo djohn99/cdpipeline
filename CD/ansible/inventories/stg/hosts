@@ -1,0 +1,6 @@
+[STG]
+
+
+[all:vars]
+# The deployment script will append ansible_user and ansible_ssh_pass
+

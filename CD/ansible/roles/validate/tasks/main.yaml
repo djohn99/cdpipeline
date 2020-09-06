@@ -1,0 +1,14 @@
+- fail: msg="The variable 'nexus_username' is not defined or length is 0"
+  when: (nexus_username is not defined) or (nexus_username|length == 0)
+
+- fail: msg="The variable 'nexus_password' is not defined or length is 0"
+  when: (nexus_password is not defined) or (nexus_password|length == 0)
+
+- fail: msg="The variable 'application_version' is not defined or length is 0"
+  when: (application_version is not defined) or (application_version|length == 0)
+
+- fail: msg="The variable 'env_type' is not defined or length is 0"
+  when: (env_type is not defined) or (env_type|length == 0)
+
+- fail: msg="The variable 'env_type' is not in ['dev', 'sit', 'stg']"
+  when: env_type not in ['dev', 'sit', 'stg']

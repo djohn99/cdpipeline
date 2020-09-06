@@ -1,0 +1,10 @@
+#!/bin/bash
+# Skip 'sudo username -c' part
+shift
+# but keep user name
+user=$1;
+shift 2
+# Execute the rest
+sudo su - $user << END
+$@
+END

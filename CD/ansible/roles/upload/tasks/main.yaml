@@ -1,0 +1,7 @@
+- name: Upload files to Nexus
+  shell: 'curl -s --upload-file {{ deployment_dir }}/{{ item[1] }} -u {{ nexus_username}}:{{ nexus_password }} {{ nexus_repo_upload_url }}/{{ item[0] }}/{{ item[1] }}'
+  args:
+    warn: False
+  loop: "{{ artifacts }}"
+  loop_control:
+    label: '{{ item[1] }}'
